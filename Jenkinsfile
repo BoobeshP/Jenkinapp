@@ -17,12 +17,12 @@ pipeline {
             steps {
                 sh '''
                 sudo apt update
-                sudo apt install -y python3.10-venv
+                sudo apt install -y python3.10-venv python3-pip
                 '''
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Setup Python Virtual Environment') {
             steps {
                 sh '''
                 python3 --version
@@ -54,10 +54,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Flask CI pipeline successful"
+            echo '✅ Flask CI pipeline completed successfully'
         }
         failure {
-            echo "❌ Flask CI pipeline failed"
+            echo '❌ Flask CI pipeline failed'
         }
         always {
             cleanWs()
