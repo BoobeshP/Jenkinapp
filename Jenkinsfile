@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         VENV = "venv"
+        APP_PORT = "5000"
+        APP_NAME = "flask-jenkins-app"
     }
 
     stages {
@@ -50,17 +52,31 @@ pipeline {
                 '''
             }
         }
+
+        stage('Run Application (Browser Access)') {
+            steps {
+                sh '''
+                echo "Stopping any existing app..."
+                sudo pkill -f app.py || true
+
+                echo "Starting Flask app..."
+                . ${VENV}/bin/activate
+                nohup python app.py > app.log 2>&1 &
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo '✅ Flask CI pipeline completed successfully'
+            echo "✅ Pipeline completed successfully"
+            echo "🌐 Access app at: http://<JENKINS_SERVER_IP>:5000/health"
         }
         failure {
-            echo '❌ Flask CI pipeline failed'
+            echo "❌ Pipeline failed"
         }
         always {
-            cleanWs()
+            archiveArtifacts artifacts: 'flask-app.tar.gz, app.log', fingerprint: true
         }
     }
 }
