@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VENV = "venv"
-    }
-
     stages {
 
         stage('Checkout') {
@@ -13,14 +9,21 @@ pipeline {
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Setup Environment') {
             steps {
                 sh '''
                 python3 --version
-                python3 -m venv ${VENV}
-                . ${VENV}/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
+
+                if python3 -m venv --help > /dev/null 2>&1; then
+                    echo "Using virtual environment"
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                else
+                    echo "python3-venv not available, using system Python"
+                    pip3 install --user -r requirements.txt
+                fi
                 '''
             }
         }
@@ -28,8 +31,10 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 sh '''
-                . ${VENV}/bin/activate
-                python -m unittest test_app.py
+                if [ -d "venv" ]; then
+                    . venv/bin/activate
+                fi
+                python3 -m unittest test_app.py
                 '''
             }
         }
@@ -45,10 +50,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Flask CI pipeline successful"
+            echo "✅ Pipeline completed successfully"
         }
         failure {
-            echo "❌ Flask CI pipeline failed"
+            echo "❌ Pipeline failed"
         }
         always {
             cleanWs()
